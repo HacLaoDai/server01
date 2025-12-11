@@ -6,18 +6,11 @@ import requests
 from requests.auth import HTTPDigestAuth
 
 
-# ==========================================================
-# Utility
-# ==========================================================
-
 def image_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
-# ==========================================================
-# Camera Client Class
-# ==========================================================
 
 class CameraClient:
     def __init__(self, ip, user, pwd):
@@ -26,8 +19,7 @@ class CameraClient:
         self.pwd = pwd
         self.session = requests.Session()
         self.csrf = None
-
-    # ---------------------- LOGIN -----------------------
+        
     def login(self):
         url = f"http://{self.ip}/API/Web/Login"
         resp = self.session.post(url, auth=HTTPDigestAuth(self.user, self.pwd))
@@ -40,7 +32,6 @@ class CameraClient:
 
         return resp.status_code == 200
 
-    # ------------------- ADD FACE -----------------------
     def add_face(self, info):
         """
         info = {
@@ -105,12 +96,7 @@ class CameraClient:
         return resp
 
 
-# ==========================================================
-# INPUT VALIDATION (TỐI ƯU NHƯNG GIỮ ĐẦY ĐỦ CHECK CỦA BẠN)
-# ==========================================================
-
 def input_and_validate():
-    # -------- Count ----------
     while True:
         cnt = input("Số lượng: ").strip()
         if cnt.isdigit() and int(cnt) >= 1:
@@ -124,14 +110,12 @@ def input_and_validate():
             break
         print("Group ID phải là số nguyên.")
 
-    # -------- Name ----------
     while True:
         name = input("Tên: ").strip()
         if name:
             break
         print("Tên không được để trống.")
-
-    # -------- Image ----------
+        
     while True:
         img_path = input("Đường dẫn ảnh: ").strip()
         if not os.path.isfile(img_path):
@@ -148,9 +132,6 @@ def input_and_validate():
         except:
             print("Không đọc được ảnh.")
 
-
-
-    # -------- Sex ----------
     while True:
         sex_in = input("Giới tính (nam/nữ): ").strip().lower()
         if sex_in in ["nam", "n", "male"]:
@@ -160,8 +141,7 @@ def input_and_validate():
             sex = 1
             break
         print("Chỉ nhập nam/nữ.")
-
-    # -------- Age ----------
+        
     while True:
         a = input("Tuổi: ").strip()
         if a.isdigit():
@@ -169,14 +149,12 @@ def input_and_validate():
             break
         print("Tuổi phải là số.")
 
-    # -------- Nation ----------
     while True:
         nation = input("Quốc tịch: ").strip()
         if nation.replace(" ", "").isalpha():
             break
         print("Quốc tịch chỉ chứa chữ cái.")
 
-    # -------- Email ----------
     email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
     while True:
         email = input("Email: ").strip()
@@ -184,7 +162,6 @@ def input_and_validate():
             break
         print("Email không hợp lệ.")
 
-    # -------- Phone ----------
     phone_pattern = r"^\+?\d{9,15}$"
     while True:
         phone = input("Số điện thoại: ").strip()
@@ -203,11 +180,6 @@ def input_and_validate():
         "email": email,
         "phone": phone
     }
-
-
-# ==========================================================
-# RUN
-# ==========================================================
 
 cam = CameraClient("192.168.100.119", "admin", "Batek@abcd")
 
