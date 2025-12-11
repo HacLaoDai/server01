@@ -1,7 +1,23 @@
 import base64
 import json
+import os
+import re
 import requests
 from requests.auth import HTTPDigestAuth
+
+
+# ==========================================================
+# Utility
+# ==========================================================
+
+def image_to_base64(path):
+    with open(path, "rb") as f:
+        return base64.b64encode(f.read()).decode("utf-8")
+
+
+# ==========================================================
+# Camera Client Class
+# ==========================================================
 
 class CameraClient:
     def __init__(self, ip, user, pwd):
@@ -11,60 +27,69 @@ class CameraClient:
         self.session = requests.Session()
         self.csrf = None
 
+    # ---------------------- LOGIN -----------------------
     def login(self):
         url = f"http://{self.ip}/API/Web/Login"
-        r = self.session.post(url, auth=HTTPDigestAuth(self.user, self.pwd))
+        resp = self.session.post(url, auth=HTTPDigestAuth(self.user, self.pwd))
 
-        print("Login:", r.status_code, r.text)
-
-        # Cookie
+        print(f"\nLogin: {resp.status_code} {resp.text}")
         print("Cookies:", self.session.cookies.get_dict())
 
-        # CSRF
-        self.csrf = r.headers.get("X-csrftoken")
+        self.csrf = resp.headers.get("X-csrftoken")
         print("CSRF:", self.csrf)
-        
 
-    def add_face(self, img_path, name="user", group_id=5):
+        return resp.status_code == 200
+
+    # ------------------- ADD FACE -----------------------
+    def add_face(self, info):
+        """
+        info = {
+            "group_id": int,
+            "name": str,
+            "image": base64,
+            "count": int,
+            "sex": int,
+            "age": int,
+            "nation": str,
+            "email": str,
+            "phone": str
+        }
+        """
+
         url = f"http://{self.ip}/API/AI/Faces/Add"
 
-        # Đọc ảnh → base64
-        with open(img_path, "rb") as f:
-            b64_image = base64.b64encode(f.read()).decode()
-
         payload = {
-                "version": "1.0",
-                "data": {
-                    "MsgId": 0,
-                    "Count": 1,
-                    "FaceInfo": [
-                        {
-                            "Id": 0,
-                            "GrpId": group_id,
-                            "Name": name,
-                            "Image1": b64_image,
-                            "Image2": "",
-                            "Image3": "",
-                            "Sex": 0,
-                            "Age": 0,
-                            "Chn": 0,
-                            "ModifyCnt": 0,
-                            "Similarity": 0,
-                            "Time": 0,
-                            "Nation": "",
-                            "NativePlace": "",
-                            "Job": "",
-                            "Remark": "",
-                            "Phone": "",
-                            "Email": "",
-                            "IdCode": "",
-                            "Country": "",
-                            "EnableChnAlarm": []
-                        }
-                    ]
-                }
+            "version": "1.0",
+            "data": {
+                "MsgId": 0,
+                "Count": info["count"],
+                "FaceInfo": [
+                    {
+                        "Id": 0,
+                        "GrpId": info["group_id"],
+                        "Name": info["name"],
+                        "Image1": info["image"],
+                        "Image2": "",
+                        "Image3": "",
+                        "Sex": info["sex"],
+                        "Age": info["age"],
+                        "Chn": 0,
+                        "ModifyCnt": 0,
+                        "Similarity": 0,
+                        "Time": 0,
+                        "Nation": info["nation"],
+                        "NativePlace": "",
+                        "Job": "",
+                        "Remark": "",
+                        "Phone": info["phone"],
+                        "Email": info["email"],
+                        "IdCode": "",
+                        "Country": "",
+                        "EnableChnAlarm": []
+                    }
+                ]
             }
-
+        }
 
         headers = {
             "Content-Type": "application/json",
@@ -74,15 +99,118 @@ class CameraClient:
 
         resp = self.session.post(url, headers=headers, data=json.dumps(payload))
 
-        print("Add Face Status:", resp.status_code)
+        print("\nAdd Face Status:", resp.status_code)
         print("Response:", resp.text)
 
         return resp
 
 
-# =========== TEST =============
+# ==========================================================
+# INPUT VALIDATION (TỐI ƯU NHƯNG GIỮ ĐẦY ĐỦ CHECK CỦA BẠN)
+# ==========================================================
+
+def input_and_validate():
+    # -------- Count ----------
+    while True:
+        cnt = input("Số lượng: ").strip()
+        if cnt.isdigit() and int(cnt) >= 1:
+            count = int(cnt)
+            break
+        print("Số lượng phải >= 1.")
+    while True:
+        g = input("Group ID: ").strip()
+        if g.isdigit():
+            group_id = int(g)
+            break
+        print("Group ID phải là số nguyên.")
+
+    # -------- Name ----------
+    while True:
+        name = input("Tên: ").strip()
+        if name:
+            break
+        print("Tên không được để trống.")
+
+    # -------- Image ----------
+    while True:
+        img_path = input("Đường dẫn ảnh: ").strip()
+        if not os.path.isfile(img_path):
+            print("File không tồn tại.")
+            continue
+
+        if not img_path.lower().endswith((".jpg", ".jpeg", ".png", ".bmp", ".webp")):
+            print("Ảnh phải có định dạng JPG/PNG/BMP/WEBP.")
+            continue
+
+        try:
+            image_b64 = image_to_base64(img_path)
+            break
+        except:
+            print("Không đọc được ảnh.")
+
+
+
+    # -------- Sex ----------
+    while True:
+        sex_in = input("Giới tính (nam/nữ): ").strip().lower()
+        if sex_in in ["nam", "n", "male"]:
+            sex = 0
+            break
+        if sex_in in ["nữ", "nu", "female"]:
+            sex = 1
+            break
+        print("Chỉ nhập nam/nữ.")
+
+    # -------- Age ----------
+    while True:
+        a = input("Tuổi: ").strip()
+        if a.isdigit():
+            age = int(a)
+            break
+        print("Tuổi phải là số.")
+
+    # -------- Nation ----------
+    while True:
+        nation = input("Quốc tịch: ").strip()
+        if nation.replace(" ", "").isalpha():
+            break
+        print("Quốc tịch chỉ chứa chữ cái.")
+
+    # -------- Email ----------
+    email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    while True:
+        email = input("Email: ").strip()
+        if re.match(email_pattern, email):
+            break
+        print("Email không hợp lệ.")
+
+    # -------- Phone ----------
+    phone_pattern = r"^\+?\d{9,15}$"
+    while True:
+        phone = input("Số điện thoại: ").strip()
+        if re.match(phone_pattern, phone):
+            break
+        print("Số điện thoại không hợp lệ.")
+
+    return {
+        "group_id": group_id,
+        "name": name,
+        "image": image_b64,
+        "count": count,
+        "sex": sex,
+        "age": age,
+        "nation": nation,
+        "email": email,
+        "phone": phone
+    }
+
+
+# ==========================================================
+# RUN
+# ==========================================================
 
 cam = CameraClient("192.168.100.119", "admin", "Batek@abcd")
-cam.login()
 
-cam.add_face("khiem.jpg", name="khiem", group_id=5)
+if cam.login():
+    info = input_and_validate()
+    cam.add_face(info)
