@@ -1,0 +1,19 @@
+logic ở service.py
+
+Request
+  ↓
+Controller (route)
+  ↓
+Service (xử lý logic chính)
+  ↓
+Model (DB / xử lý dữ liệu)
+  ↓
+Service
+  ↓
+Controller
+  ↓
+Response
+
+
+
+task
