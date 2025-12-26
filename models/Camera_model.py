@@ -28,7 +28,7 @@ class CameraClient:
         print("CSRF:", self.csrf)
 
         return resp.status_code == 200
-    def get_images_feature(self, group_id,face_ids, person_id=None):
+    def get_images_feature(self,face_ids):
         # take information of person ()
         url = f"http://{self.ip}/API/AI/AddedFaces/GetById"
         payload = {
@@ -41,8 +41,6 @@ class CameraClient:
                 "WithFeature": 1
             }
         }
-        if person_id:
-            payload["PersonID"] = person_id
             
         print(payload)
         headers = {
@@ -53,10 +51,7 @@ class CameraClient:
             "Cookie": f"session={self.session.cookies.get('session')}; csrftoken={self.csrf}"
         }
 
-
         resp = self.session.post(url, headers=headers, json=payload)
-        with open(path_log,'+w') as w:
-            w.write(resp.text)
         print("\nGetImagesFeature:", resp.status_code)
         print(resp.text)
 
@@ -242,15 +237,15 @@ class CameraClient:
 #         "email": email,
 #         "phone": phone
 #     }
+# 
+# cam = CameraClient("192.168.100.119", "admin", "Batek@abcd")
 
-cam = CameraClient("192.168.100.119", "admin", "Batek@abcd")
-
-if cam.login():
+# if cam.login():
 #     info = input_and_validate()
 #     cam.add_face(info)
     
     
     # face_ids = list(range(0, 101))  # FaceID từ 1 → 100
     # cam.get_images_feature(group_id=5,face_ids=face_ids)
-    
-    cam.remove_face(face_id=21,MD5="4A61DE90CEAC88CA0528BE369B9F897B")
+    # 
+    # cam.remove_face(face_id=23,MD5="4A61DE90CEAC88CA0528BE369B9F897B")

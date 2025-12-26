@@ -1,0 +1,24 @@
+env:
+  node_env: development
+
+jwt:
+  secret: baoan_DSFfo832f@refw1!dfsof_3312ido0f
+  expire_days: 30
+
+database:
+  mongodb_uri: mongodb://baoan_dev:5769boan20s12rui@103.159.51.61/baoan_dev
+
+api:
+  app: http://localhost/v1
+
+camera:
+  user: admin
+  password: Batek@abcd
+
+storage:
+  base_image_dir: /data/faces
+
+recorder:
+  ip: 192.168.100.119
+  user: admin
+  password: Batek@abcd
